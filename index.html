@@ -515,17 +515,23 @@ function addObject(mesh,type,laneIndex,z,extra={}){
 function makeObstacle(type){
  const g=new THREE.Group();
  if(type==='rock'){
-  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.72,1),mats.stoneDark);rock.position.y=.68;rock.scale.set(1,1,.85);rock.castShadow=true;g.add(rock);
-  for(let i=0;i<3;i++)sphere(g,.12,.08,.12,mats.moss,(Math.random()-.5)*.8,1.15,(Math.random()-.5)*.6,8);
+  // A tall, chunky stone barrier that is unmistakably a jump obstacle.
+  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.88,1),mats.stoneDark);rock.position.y=.92;rock.scale.set(1.12,1.12,.9);rock.castShadow=true;g.add(rock);
+  for(let i=0;i<4;i++)sphere(g,.15,.09,.14,mats.moss,(Math.random()-.5)*1.15,1.65,(Math.random()-.5)*.65,8);
  }else if(type==='log'){
-  const log=cylinder(g,.32,.32,1.8,mats.bark,0,.48,0,10);log.rotation.z=Math.PI/2;
-  for(let i=0;i<4;i++){const ring=cylinder(g,.34,.34,.07,mats.leatherLight,0,.48,(i-1.5)*.28,10);ring.rotation.z=Math.PI/2;}
+  // A thick fallen tree trunk, raised clearly off the ground.
+  const log=cylinder(g,.48,.48,2.0,mats.bark,0,.72,0,12);log.rotation.z=Math.PI/2;
+  for(let i=0;i<5;i++){const ring=cylinder(g,.5,.5,.08,mats.leatherLight,0,.72,(i-2)*.32,12);ring.rotation.z=Math.PI/2;}
  }else{
-  // Open-bottom overhead gate; runners can slide beneath it.
-  box(g,1.95,.28,.42,mats.red,0,2.05,0);box(g,2.05,.11,.5,mats.gold,0,2.23,0);
-  box(g,.16,1.95,.42,mats.red,-.88,1.0,0);box(g,.16,1.95,.42,mats.red,.88,1.0,0);
-  box(g,.2,.18,.5,mats.gold,-.88,1.92,0);box(g,.2,.18,.5,mats.gold,.88,1.92,0);
-  box(g,.62,.12,.08,mats.goldLight,0,1.78,-.25);
+  // A low-hanging temple warning banner: duck/slide underneath the cloth.
+  box(g,2.0,.16,.18,mats.red,0,2.55,0);
+  box(g,1.72,1.32,.10,mats.red,0,1.82,0);
+  box(g,1.82,.10,.14,mats.gold,0,2.49,0);
+  box(g,1.82,.10,.14,mats.gold,0,1.15,0);
+  box(g,.12,1.25,.12,mats.gold,0,1.82,-.07);
+  // Gold crest and tassels make the hanging cloth read as a flag.
+  const crest=new THREE.Mesh(new THREE.OctahedronGeometry(.22,0),mats.goldLight);crest.position.set(0,1.88,-.12);g.add(crest);
+  for(const x of [-.62,0,.62]){const tassel=cylinder(g,.035,.035,.22,mats.gold, x,1.02,-.02,6);tassel.rotation.x=Math.PI/2;}
  }
  return g;
 }
@@ -680,7 +686,7 @@ function animate(){
     else if(o.type==='power'){o.hit=true;handlePower(o.power);scene.remove(o.mesh);objects.splice(i,1)}
     else{
      const jumpObstacle=o.type==='rock'||o.type==='log';
-     const avoided=jumpObstacle?player.position.y>.76:(sliding||dive>0);
+     const avoided=jumpObstacle?player.position.y>1.12:(sliding||dive>0);
      if(!avoided){if(shieldTime>0){shieldTime=0;o.hit=true;sound('hit');toastMsg('SHIELD SAVED YOU!')}else{sound('hit');endRun();break}}
      else{o.hit=true;toastMsg(jumpObstacle?'NICE JUMP!':'CLEAN SLIDE!')}
     }
