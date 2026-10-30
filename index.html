@@ -42,6 +42,19 @@ h2{font-size:22px;color:var(--cream);margin:5px 0 12px}
 .row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
 .hidden{display:none!important}
 @media(min-width:700px){.panel{padding:30px}.control{width:54px;height:54px}}
+
+/* TEMPLE DASH VISUAL OVERHAUL */
+#hud{padding:10px 14px;gap:9px}
+.pill{background:linear-gradient(145deg,#102b25ee,#173e32e8);box-shadow:0 7px 22px #06130f66,inset 0 1px #ffffff24;border-radius:16px}
+#brand{font-size:11px;letter-spacing:4px}
+#stage{padding:6px 10px;border-radius:9px;background:#10251f9c;backdrop-filter:blur(7px)}
+#pause{box-shadow:0 5px 18px #06130f66}
+.panel{background:linear-gradient(155deg,#173b31f5,#0b211df7 72%);box-shadow:0 25px 90px #000b,inset 0 1px #ffffff20}
+.primary{background:linear-gradient(110deg,#ffe49b,#f0b94f 55%,#d98b38);box-shadow:0 5px 0 #8e5428,0 10px 26px #eaa94233}
+.card,.upgrade,.stat{box-shadow:inset 0 1px #ffffff12,0 8px 20px #0002}
+.control{box-shadow:0 7px 18px #0005,inset 0 1px #ffffff20}
+@media(max-height:700px){.panel{padding:16px}.logoMark{font-size:32px}.statRow{margin:8px 0}.primary{margin-top:9px;padding:11px 16px}.cards{gap:6px}.card{min-height:95px;padding:9px}}
+
 </style>
 </head>
 <body>
@@ -258,6 +271,52 @@ sphere(compass,.17,.17,.055,mats.gold,0,0,0,16);
 sphere(compass,.12,.12,.06,mats.dark,0,0,.05,12);
 cone(compass,.065,.23,mats.goldLight,0,.03,.1,4).rotation.x=Math.PI/2;
 
+
+// EXPANDED WORLD DETAIL: carved borders, gateways, bridges, banners and drifting petals
+const borderDetails=new THREE.Group();scene.add(borderDetails);
+for(let side of [-1,1]){
+ for(let z=7;z>-112;z-=7){
+  const x=side*4.05;
+  const post=cylinder(borderDetails,.13,.18,1.15,mats.stoneDark,x,.48,z,8);
+  sphere(borderDetails,.2,.2,.2,mats.gold,x,1.12,z,10);
+  box(borderDetails,.18,.12,1.3,mats.gold,x,.95,z-.55);
+ }
+}
+const gateGroups=[];
+function addCeremonialGate(z){
+ const g=new THREE.Group();g.position.z=z;
+ for(const x of [-3.9,3.9]){
+  box(g,.34,3.5,.38,mats.red,x,1.75,0);
+  box(g,.55,.18,.55,mats.gold,x,3.35,0);
+ }
+ box(g,8.35,.38,.55,mats.red,0,3.35,0);
+ const roof=cone(g,4.6,.72,mats.red,0,3.83,0,4);roof.rotation.y=Math.PI/4;roof.scale.y=.55;
+ box(g,2.1,.55,.12,mats.gold,0,2.78,-.31);
+ gateGroups.push(g);scene.add(g);
+}
+for(let z=-25;z>-115;z-=30)addCeremonialGate(z);
+// Suspended paper lanterns and colored prayer banners
+for(let z=-12;z>-110;z-=18){
+ for(let side of [-1,1]){
+  const banner=new THREE.Group();banner.position.set(side*5.0,3.1,z);
+  box(banner,.08,1.05,.07,mats.gold,0,0,0);
+  const cloth=box(banner,.62,.85,.045,side<0?mats.red:mats.jade,side*.22,-.15,0);
+  cloth.rotation.z=side*.08;
+  cone(banner,.18,.22,mats.gold,side*.22,-.69,0,4);
+  scene.add(banner);decor.push(banner);
+ }
+}
+// Stone bridge arches along the outer ponds
+for(let z=-18;z>-110;z-=36){
+ const bridge=new THREE.Group();bridge.position.set(0,-.02,z);
+ const deck=box(bridge,12,.2,2.2,mats.stoneDark,0,0,0);
+ for(let x=-5.4;x<=5.4;x+=1.8){
+  cylinder(bridge,.07,.07,.72,mats.gold,x,.42,-.8,8);
+  cylinder(bridge,.07,.07,.72,mats.gold,x,.42,.8,8);
+ }
+ scene.add(bridge);decor.push(bridge);
+}
+
 // camera light-catching glints and atmosphere
 const ambientParticles=new THREE.Group();scene.add(ambientParticles);
 const particleMat=material(0xffe9b5,.6);
@@ -401,18 +460,36 @@ function endRun(){
  $('hud').classList.add('hidden');
 }
 function collectCoin(o){
- o.hit=true;scene.remove(o.mesh);runCoins+=((progress.upgrades.double||0)>0?1+(progress.upgrades.double||0):1)*(doubleTime>0?2:1);
+ sound('coin');o.hit=true;scene.remove(o.mesh);runCoins+=((progress.upgrades.double||0)>0?1+(progress.upgrades.double||0):1)*(doubleTime>0?2:1);
  coinsEl.textContent=runCoins;toastMsg('+'+(((progress.upgrades.double||0)>0?1+(progress.upgrades.double||0):1)*(doubleTime>0?2:1))+' COIN'+(doubleTime>0?' · DOUBLE!':''));
 }
 function handlePower(type){
+ sound('power');
  if(type==='magnet'){magnetTime=9+(progress.upgrades.magnet||0)*2;toastMsg('LUCKY COMPASS · MAGNET!')}
  if(type==='shield'){shieldTime=10+(progress.upgrades.shield||0)*2;toastMsg('GUARDIAN CHARM · SHIELD!')}
  if(type==='double'){doubleTime=10;toastMsg('GOLDEN FORTUNE · 2× COINS!')}
 }
 
+
+// Lightweight synthesized sound design (no external audio files)
+let audioCtx=null;
+function sound(kind){
+ try{
+  audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+  const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=kind==='coin'?2400:1200;
+  osc.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);
+  const presets={coin:[880,1320,.11,'sine'],jump:[240,510,.16,'triangle'],slide:[180,95,.14,'sawtooth'],power:[420,1050,.25,'sine'],hit:[150,55,.28,'triangle'],button:[330,520,.08,'sine']};
+  const p=presets[kind]||presets.button;osc.type=p[3];osc.frequency.setValueAtTime(p[0],now);osc.frequency.exponentialRampToValueAtTime(p[1],now+p[2]);
+  gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.12,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+p[2]);
+  osc.start(now);osc.stop(now+p[2]+.02);
+ }catch(e){}
+}
+
 // Input: swipe plus generous on-screen controls
 function move(d){if(!playing||paused)return;lane=Math.max(0,Math.min(2,lane+d))}
-function act(dir){if(!playing||paused)return;if(dir==='up'&&jump<=0&&slide<=0)jump=.82;if(dir==='down'&&jump<=0)slide=.78}
+function act(dir){if(!playing||paused)return;if(dir==='up'&&jump<=0&&slide<=0){jump=.82;sound('jump')}if(dir==='down'&&jump<=0){slide=.78;sound('slide')}}
 $('start').onclick=startRun;$('pause').onclick=pauseRun;
 $('leftBtn').onclick=()=>move(-1);$('rightBtn').onclick=()=>move(1);$('jumpBtn').onclick=()=>act('up');$('slideBtn').onclick=()=>act('down');
 let sx=0,sy=0;
@@ -431,7 +508,8 @@ function animate(){
   if(coinTimer>2.15){spawnCoinPattern();coinTimer=0}
   if(powerTimer>13){if(Math.random()<.75)spawnPower();powerTimer=0}
   lane=THREE.MathUtils.clamp(lane,0,2);
-  player.position.x=THREE.MathUtils.damp(player.position.x,lanes[lane],13,dt);
+  player.position.x=THREE.MathUtils.damp(player.position.x,lanes[lane],16,dt);
+  camera.position.x=THREE.MathUtils.damp(camera.position.x,player.position.x*.12,2.5,dt);
   if(jump>0)jump=Math.max(0,jump-dt);if(slide>0)slide=Math.max(0,slide-dt);
   const jumping=jump>0,sliding=slide>0;
   player.position.y=jumping?Math.sin((.82-jump)/.82*Math.PI)*1.55:0;
@@ -451,6 +529,7 @@ function animate(){
   // scroll floor and side scenery
   tiles.forEach(t=>{t.position.z+=speed*dt;if(t.position.z>10)t.position.z-=123});
   decor.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>12)g.position.z-=130});
+  gateGroups.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>14)g.position.z-=120});
   // Objects move toward the runner
   for(let i=objects.length-1;i>=0;i--){
    const o=objects[i];o.mesh.position.z+=speed*dt;o.z=o.mesh.position.z;
@@ -466,7 +545,7 @@ function animate(){
     else{
      const jumpObstacle=o.type==='rock'||o.type==='log';
      const avoided=jumpObstacle?player.position.y>.76:sliding;
-     if(!avoided){if(shieldTime>0){shieldTime=0;o.hit=true;toastMsg('SHIELD SAVED YOU!')}else{endRun();break}}
+     if(!avoided){if(shieldTime>0){shieldTime=0;o.hit=true;sound('hit');toastMsg('SHIELD SAVED YOU!')}else{sound('hit');endRun();break}}
      else{o.hit=true;toastMsg(jumpObstacle?'NICE JUMP!':'CLEAN SLIDE!')}
     }
    }
