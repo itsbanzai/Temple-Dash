@@ -1,0 +1,1 @@
+Place the supplied red-panda.glb file in this folder with the exact filename red-panda.glb. The game will use its built-in fallback character until that model file is added.
