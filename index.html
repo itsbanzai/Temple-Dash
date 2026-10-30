@@ -55,6 +55,29 @@ h2{font-size:22px;color:var(--cream);margin:5px 0 12px}
 .control{box-shadow:0 7px 18px #0005,inset 0 1px #ffffff20}
 @media(max-height:700px){.panel{padding:16px}.logoMark{font-size:32px}.statRow{margin:8px 0}.primary{margin-top:9px;padding:11px 16px}.cards{gap:6px}.card{min-height:95px;padding:9px}}
 
+
+/* FINAL PRESENTATION PASS */
+:root{--ink:#0c211c;--panel:#102d25f5;--gold:#f6d27e;--cream:#fff3d6;--muted:#d0dfd3}
+body{background:radial-gradient(ellipse at 50% 22%,#315c50 0%,#102c25 50%,#081914 100%)}
+#game:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#071b1670,transparent 22%,transparent 78%,#071b1670),linear-gradient(0deg,#071b1680,transparent 28%,transparent 78%,#071b1640)}
+#hud{filter:drop-shadow(0 6px 15px #06120f88)}
+.pill{border-color:#f2d58b88;background:linear-gradient(145deg,#0a2923ed,#1e5140e8);box-shadow:0 8px 24px #06130f77,inset 0 1px #ffffff35,inset 0 -1px #0005;letter-spacing:.3px}
+#brand{color:#fff0c5;text-shadow:0 2px 4px #07130f,0 0 18px #e6bc6a55}
+#stage{color:#fff0c5;border:1px solid #f1d28d55;box-shadow:0 5px 18px #07130f55}
+#pause{border-color:#f4d18b99;background:linear-gradient(145deg,#173a30f0,#0d241ef0);box-shadow:0 6px 20px #06130f88,inset 0 1px #ffffff35}
+.panel{position:relative;overflow:hidden;border:1px solid #f0d18a99;background:linear-gradient(155deg,#1d493af7,#0b201bf8 78%);box-shadow:0 28px 90px #000c,inset 0 1px #fff4,inset 0 -1px #0008}
+.panel:before{content:"";position:absolute;inset:8px;border:1px solid #f5d58b26;border-radius:19px;pointer-events:none}
+.logoMark{filter:drop-shadow(0 5px 12px #f4bd5a55)}
+.eyebrow{color:#f9d98b;text-shadow:0 2px 7px #0008}
+.primary{border:1px solid #fff0bd;background:linear-gradient(115deg,#fff0ae,#f1bd56 52%,#cf7b35);box-shadow:0 5px 0 #925322,0 12px 30px #e9a63d38,inset 0 1px #fff9}
+.secondary,.tab{border-color:#e8c76b77;background:linear-gradient(145deg,#305d49,#1b392f)}
+.tab.active{background:linear-gradient(120deg,#fff0ae,#e4ad4b);color:#30200d}
+.card,.upgrade,.stat{border-color:#e7c77a66;background:linear-gradient(145deg,#16382ee8,#0c211cf2);box-shadow:inset 0 1px #ffffff18,0 9px 24px #0003}
+.control{border-color:#f1d18c99;background:linear-gradient(145deg,#1c4939dd,#0c251fdc);box-shadow:0 8px 22px #0007,inset 0 1px #fff4}
+.control:active,.primary:active{transform:translateY(2px);filter:brightness(1.12)}
+#hint{letter-spacing:1.2px;font-weight:800;color:#fff3d7;text-shadow:0 2px 7px #000}
+#toast{font-size:clamp(20px,5vw,30px);letter-spacing:1px;text-shadow:0 3px 12px #000,0 0 18px #f4c35b88}
+
 </style>
 </head>
 <body>
@@ -141,6 +164,26 @@ const mats={
  black:material(0x211c20,.35),white:material(0xfff2da),leather:material(0x69402c),leatherLight:material(0xa76a3a),
  scarf:material(0x9f2e2b),stripe:material(0x3e2828),silver:material(0xbac6c0,.3,.7)
 };
+
+/* Hand-painted procedural surface maps: zero-download visual detail. */
+function paintedTexture(base, fleck, seed=1){
+ const c=document.createElement('canvas');c.width=256;c.height=256;
+ const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,256,256);
+ let s=seed;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+ for(let i=0;i<1900;i++){const a=50+rnd()*150;x.globalAlpha=.025+rnd()*.12;x.fillStyle=fleck;x.beginPath();x.arc(rnd()*256,rnd()*256,.35+rnd()*2.1,0,Math.PI*2);x.fill()}
+ x.globalAlpha=.22;x.strokeStyle=fleck;x.lineWidth=1;
+ for(let i=0;i<14;i++){let px=rnd()*256,py=rnd()*256;x.beginPath();x.moveTo(px,py);for(let j=0;j<3;j++){px+=(rnd()-.5)*24;py+=rnd()*19;x.lineTo(px,py)}x.stroke()}
+ x.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t;
+}
+const stoneTex=paintedTexture('#aaa995','#55594d',19);
+const darkStoneTex=paintedTexture('#77796c','#d0c6a6',31);
+const woodTex=paintedTexture('#795137','#2d211b',47);
+const roofTex=paintedTexture('#a83d32','#f0a35a',73);
+mats.stone.map=stoneTex;mats.stone.bumpMap=stoneTex;mats.stone.bumpScale=.055;
+mats.stoneDark.map=darkStoneTex;mats.stoneDark.bumpMap=darkStoneTex;mats.stoneDark.bumpScale=.075;
+mats.bark.map=woodTex;mats.bark.bumpMap=woodTex;mats.bark.bumpScale=.045;
+mats.red.map=roofTex;mats.red.bumpMap=roofTex;mats.red.bumpScale=.025;
+
 function box(parent,w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
 function sphere(parent,rx,ry,rz,mat,x,y,z,seg=16){const m=new THREE.Mesh(new THREE.SphereGeometry(1,seg,Math.max(8,Math.floor(seg*.7))),mat);m.scale.set(rx,ry,rz);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
 function cylinder(parent,rt,rb,h,mat,x,y,z,rad=10){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,rad),mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}
@@ -148,7 +191,7 @@ function cone(parent,r,h,mat,x,y,z,rad=7){const m=new THREE.Mesh(new THREE.ConeG
 
 // Endless stone causeway
 const track=new THREE.Group();scene.add(track);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(12,220),material(0x777e68));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.15,-95);ground.receiveShadow=true;track.add(ground);
+const groundMat=material(0x777e68);groundMat.map=stoneTex;groundMat.bumpMap=stoneTex;groundMat.bumpScale=.035;groundMat.map.repeat.set(4,46);const ground=new THREE.Mesh(new THREE.PlaneGeometry(12,220),groundMat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.15,-95);ground.receiveShadow=true;track.add(ground);
 const tiles=[];
 for(let z=9;z>-114;z-=3){for(let lane=-1;lane<=1;lane++){const t=box(track,2.36,.15,2.82,mats.stone,lane*2.45,-.02,z);tiles.push(t);if(Math.random()<.45){box(track,.42,.025,.22,mats.moss,lane*2.45+(Math.random()-.5)*1.65,.075,z+(Math.random()-.5)*1.8)}}}
 for(let x of [-3.72,3.72]){box(track,.22,.1,220,mats.stoneDark,x,-.025,-95);}
@@ -232,6 +275,22 @@ for(const side of [-1,1]){
  sphere(head,.06,.07,.045,mats.cream,side*.48,-.18,-.2,12);
 }
 // expressive brows
+
+// Rumi's face and explorer kit: warm inner ears, amber eyes, muzzle freckles and stitched details.
+for(const side of [-1,1]){
+ sphere(head,.095,.145,.045,mats.pink,side*.4,.37,-.155,12);
+ sphere(head,.057,.071,.034,mats.gold,side*.2,.07,-.505,12);
+ sphere(head,.027,.046,.02,mats.black,side*.2,.07,-.535,10);
+ sphere(head,.018,.02,.012,mats.white,side*.215,.1,-.555,8);
+ for(let k=0;k<3;k++)sphere(head,.018,.018,.012,mats.mask,side*(.22+k*.055),-.23-(k%2)*.045,-.535,8);
+}
+const smileCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(-.12,-.34,-.54),new THREE.Vector3(0,-.39,-.565),new THREE.Vector3(.12,-.34,-.54)]);
+head.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,12,.012,6,false),mats.mask));
+for(const side of [-1,1]){
+ box(torso,.055,.48,.045,mats.gold,side*.31,1.18,-.245);
+ box(torso,.22,.055,.05,mats.gold,side*.22,.92,-.29);
+}
+sphere(torso,.105,.105,.035,mats.goldLight,0,1.25,-.31,12);
 box(head,.17,.035,.035,mats.mask,-.2,.26,-.45).rotation.z=.18;
 box(head,.17,.035,.035,mats.mask,.2,.26,-.45).rotation.z=-.18;
 // Scarf, collar and flowing end
@@ -273,6 +332,77 @@ cone(compass,.065,.23,mats.goldLight,0,.03,.1,4).rotation.x=Math.PI/2;
 
 
 // EXPANDED WORLD DETAIL: carved borders, gateways, bridges, banners and drifting petals
+
+// SIGNATURE LANDMARKS: layered temple halls, flowering trees, waterfalls and guardians.
+function addBlossomTree(x,z,scale=1,autumn=false){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ cylinder(g,.22,.34,3.25,mats.bark,0,1.55,0,9);
+ for(let i=0;i<4;i++){const b=cylinder(g,.075,.13,1.55,mats.bark,(i-1.5)*.27,2.55,0,7);b.rotation.z=(i-1.5)*.38-.28;}
+ const canopy=autumn?mats.redLight:mats.leaf;
+ for(let i=0;i<9;i++){
+  const a=i*2.399,rad=.5+(i%3)*.24;
+  sphere(g,.72,.52,.68,canopy,Math.cos(a)*rad,3.15+(i%3)*.34,Math.sin(a)*rad,12);
+ }
+ for(let i=0;i<13;i++){
+  const a=i*2.4,rad=.55+(i%4)*.2;
+  sphere(g,.12,.12,.12,autumn?mats.goldLight:mats.pink,Math.cos(a)*rad,3.2+(i%4)*.28,Math.sin(a)*rad,8);
+ }
+ g.userData.sway=1;decor.push(g);scene.add(g);
+}
+function addTempleHall(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ box(g,4.3,.38,3.3,mats.stoneDark,0,.35,0);
+ box(g,3.6,2.25,2.6,mats.red,0,1.58,0);
+ box(g,2.2,1.65,.14,mats.dark,0,1.3,-1.34);
+ box(g,1.45,1.48,.12,mats.leather,0,1.22,-1.44);
+ for(const xx of [-1.55,1.55]){
+  cylinder(g,.13,.16,2.35,mats.gold,xx,1.58,-1.55,10);
+  sphere(g,.19,.13,.19,mats.gold,xx,2.68,-1.55,10);
+ }
+ for(let tier=0;tier<2;tier++){
+  const y=2.75+tier*.77,wide=2.95-tier*.45;
+  const roof=cone(g,wide,.72,mats.red,0,y,0,4);roof.rotation.y=Math.PI/4;roof.scale.y=.66;
+  box(g,wide*1.35,.13,wide*1.35,mats.gold,0,y-.32,0);
+  for(const xx of [-wide*.92,wide*.92]){const tip=cone(g,.17,.5,mats.gold,xx,y-.05,0,4);tip.rotation.z=xx<0?-.48:.48;}
+ }
+ cone(g,.13,.8,mats.gold,0,4.55,0,6);
+ for(let i=0;i<3;i++)box(g,.12,.08,1.1,mats.gold,0,1.1+i*.42,-1.53);
+ decor.push(g);scene.add(g);
+}
+function addGuardian(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ box(g,1.5,.35,1.25,mats.stoneDark,0,.18,0);
+ sphere(g,.48,.55,.43,mats.stone,0,.85,0,14);
+ sphere(g,.42,.38,.4,mats.stone,.0,1.38,-.05,14);
+ for(const side of [-1,1]){
+  sphere(g,.19,.23,.18,mats.stone,side*.38,1.58,-.08,10);
+  cone(g,.13,.45,mats.stone,side*.35,1.87,-.04,5).rotation.z=side*.3;
+  sphere(g,.07,.07,.045,mats.gold,side*.17,1.43,-.41,8);
+  sphere(g,.17,.2,.2,mats.stone,side*.43,.7,.08,10);
+ }
+ sphere(g,.15,.11,.12,mats.stoneDark,0,1.25,-.43,10);
+ for(let i=0;i<3;i++)box(g,.12,.08,.06,mats.gold,(i-1)*.2,.53,-.47);
+ decor.push(g);scene.add(g);
+}
+function addWaterfall(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ const cliff=material(0x687d70);box(g,2.1,5.2,1.25,cliff,0,2.6,-.5);
+ const waterMat=new THREE.MeshPhysicalMaterial({color:0x8be7e5,roughness:.16,metalness:.05,transparent:true,opacity:.78,emissive:0x1d777d,emissiveIntensity:.18,side:THREE.DoubleSide});
+ const sheet=new THREE.Mesh(new THREE.PlaneGeometry(1.35,4.45,8,18),waterMat);sheet.position.set(0,2.55,.17);g.add(sheet);
+ const lip=box(g,1.75,.18,.65,mats.moss,0,4.95,0);
+ for(let i=0;i<4;i++)sphere(g,.22,.18,.22,mats.stoneDark,(i-1.5)*.48,.3,.1,9);
+ g.userData.water=sheet;g.userData.flow=1;decor.push(g);scene.add(g);
+}
+for(let z=-18;z>-116;z-=31){
+ const side=z%2===0?-1:1;
+ addBlossomTree(side*8.8,z-4,.88,Math.random()<.38);
+ addBlossomTree(-side*9.1,z-17,.78,true);
+}
+addTempleHall(-10.3,-42,.9);addTempleHall(10.3,-91,.82);
+addGuardian(-4.7,-53,.92);addGuardian(4.7,-53,.92);
+addGuardian(-4.7,-101,.92);addGuardian(4.7,-101,.92);
+addWaterfall(-9.2,-68,.9);addWaterfall(9.2,-113,.82);
+
 const borderDetails=new THREE.Group();scene.add(borderDetails);
 for(let side of [-1,1]){
  for(let z=7;z>-112;z-=7){
@@ -523,15 +653,17 @@ function animate(){
   rightArm.rotation.x=jumping&&!lowPose?-.9:lowPose?-.35:-runSwing*.85;
   leftLeg.rotation.x=jumping&&!lowPose?-.65:lowPose?.72:-runSwing*.9;
   rightLeg.rotation.x=jumping&&!lowPose?-.65:lowPose?.72:runSwing*.9;
-  tailRoot.rotation.x=Math.sin(elapsed*5)*.08;
-  tailRoot.rotation.z=Math.sin(elapsed*4.2)*.12;
+  tailRoot.rotation.x=Math.sin(elapsed*5.4)*.1;
+  tailRoot.rotation.z=Math.sin(elapsed*4.2)*.14;
+  torso.position.y=Math.sin(elapsed*speed*.9)*.025;
   head.rotation.z=Math.sin(elapsed*speed*.45)*.025;
+  head.rotation.y=THREE.MathUtils.damp(head.rotation.y,Math.sin(elapsed*1.4)*.035,4,dt);
   scarfTail.rotation.x=Math.sin(elapsed*9)*.15;
   if(shieldTime>0)shieldTime-=dt;if(magnetTime>0)magnetTime-=dt;if(doubleTime>0)doubleTime-=dt;
   if(shieldTime>0&&Math.floor(elapsed*5)%2===0)avatar.traverse(o=>{if(o.isMesh&&o.material===mats.gold)o.material=mats.goldLight});
   // scroll floor and side scenery
   tiles.forEach(t=>{t.position.z+=speed*dt;if(t.position.z>10)t.position.z-=123});
-  decor.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>12)g.position.z-=130});
+  decor.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>12)g.position.z-=130;if(g.userData.sway)g.rotation.z=Math.sin(elapsed*1.35+g.position.z*.08)*.025;if(g.userData.flow){g.userData.water.position.y=2.55+Math.sin(elapsed*5+g.position.x)*.045;g.userData.water.scale.x=1+Math.sin(elapsed*4)*.025;}});
   mountains.position.z+=speed*dt*.22;if(mountains.position.z>24)mountains.position.z-=145;
   gateGroups.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>14)g.position.z-=120});
   // Objects move toward the runner
