@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10251f"><title>Temple Dash — Red Panda Runner</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10251f;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+#game{position:fixed;inset:0}canvas{display:block}
+#hud{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;display:flex;justify-content:space-between;padding:14px 18px;pointer-events:none;z-index:3;text-shadow:0 2px 5px #14231f}
+.pill{background:#10251fd9;border:1px solid #e8c76b66;border-radius:14px;padding:8px 13px;font-weight:800;backdrop-filter:blur(8px)}
+#brand{position:fixed;top:76px;left:18px;font-size:11px;letter-spacing:3px;color:#ffe5a2;font-weight:900;text-shadow:0 2px 5px #14231f}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(#071c1688,#071c16aa);z-index:5;padding:22px}
+.panel{max-width:420px;width:100%;text-align:center;background:#132c24ed;border:1px solid #e8c76b88;border-radius:26px;padding:26px 22px;box-shadow:0 20px 70px #0008}
+h1{font-size:clamp(29px,8vw,44px);line-height:1;margin:5px 0 10px;color:#ffe2a0;letter-spacing:1px}
+.sub{color:#d5e3d4;line-height:1.5;font-size:14px}
+button{border:0;border-radius:15px;background:linear-gradient(135deg,#f7d477,#d88b36);color:#34200c;font-size:17px;font-weight:900;padding:14px 24px;margin-top:17px;min-width:180px}
+#hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:0;right:0;text-align:center;color:#fff;text-shadow:0 2px 5px #14231f;font-size:12px;pointer-events:none}
+#toast{position:fixed;top:22%;left:0;right:0;text-align:center;font-size:22px;font-weight:900;color:#ffe29a;text-shadow:0 2px 6px #000;opacity:0;pointer-events:none}
+.hidden{display:none!important}
+</style></head><body>
+<div id="game"></div>
+<div id="hud"><div class="pill">🏮 <span id="score">0</span></div><div class="pill">🪙 <span id="coins">0</span></div><div class="pill">BEST <span id="best">0</span></div></div>
+<div id="brand">TEMPLE DASH · CHAPTER 01</div><div id="toast">+1 COIN</div>
+<div id="overlay"><div class="panel"><div style="font-size:42px">🐾</div><h1>TEMPLE DASH</h1><div class="sub">A little red panda. A very big adventure.<br>Run through the ancient temple gardens, collect golden coins and dodge the obstacles.</div><button id="start">START RUN</button><div class="sub" style="font-size:11px;margin-top:14px">Swipe ◀ ▶ to move · ▲ to jump · ▼ to slide</div></div></div>
+<div id="hint">SWIPE TO MOVE · COLLECT COINS · AVOID THE OBSTACLES</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+const mount=document.querySelector('#game'), scene=new THREE.Scene(); scene.background=new THREE.Color(0x9bd9d0); scene.fog=new THREE.Fog(0x9bd9d0,24,95);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,180); camera.position.set(0,5.5,10.5); camera.lookAt(0,1.2,-3);
+const renderer=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.7)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd8f5ff,0x43522b,2.0)); const sun=new THREE.DirectionalLight(0xffefc8,2.4);sun.position.set(-5,12,7);sun.castShadow=true;scene.add(sun);
+const mat=(c,r=.8)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+const stone=mat(0x9c9b83), moss=mat(0x4b8150), jade=mat(0x26765b), red=mat(0xb9362c), gold=mat(0xf6c34c,.35), dark=mat(0x293c31), pink=mat(0xf6a7b5);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(11,180),mat(0x777d65));floor.rotation.x=-Math.PI/2;floor.position.set(0,-.12,-55);floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.Group();scene.add(grid);
+for(let z=8;z>-100;z-=3){for(let x=-1;x<=1;x++){let tile=new THREE.Mesh(new THREE.BoxGeometry(2.35,.16,2.85),stone);tile.position.set(x*2.45,-.02,z);tile.receiveShadow=true;grid.add(tile);if(Math.random()<.3){let patch=new THREE.Mesh(new THREE.BoxGeometry(.5,.025,.35),moss);patch.position.set(x*2.45+(Math.random()-.5)*1.5,.075,z+(Math.random()-.5)*1.7);grid.add(patch)}}}
+function box(parent,w,h,d,material,x,y,z){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function pagoda(x,z,s=1){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,.45,3,.45,stone,0,1.5,0);for(let i=0;i<3;i++){let y=2.0+i*.8, roof=new THREE.Mesh(new THREE.ConeGeometry(2.1-i*.35,.65,4),red);roof.rotation.y=Math.PI/4;roof.position.y=y;roof.scale.set(1,.55,1);roof.castShadow=true;g.add(roof);box(g,1.05,.18,1.05,gold,0,y-.32,0)}}
+function lantern(x,z){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,.12,2.1,.12,dark,0,1,0);let l=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),red);l.position.y=2.35;g.add(l);box(g,.7,.1,.7,gold,0,2.75,0)}
+function bamboo(x,z){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);for(let i=0;i<4;i++){let h=3+Math.random()*2;let stem=new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,h,7),jade);stem.position.set((Math.random()-.5)*.8,h/2,0);g.add(stem);for(let j=0;j<5;j++){let leaf=new THREE.Mesh(new THREE.ConeGeometry(.16,.95,5),i%2?moss:jade);leaf.rotation.z=(Math.random()-.5)*1.5;leaf.rotation.x=Math.PI/2;leaf.position.set(stem.position.x+(Math.random()-.5)*.8,h*.35+j*.35,0);g.add(leaf)}}}
+for(let z=-8;z>-95;z-=18){pagoda(-8,z,.8);pagoda(8,z-7,.8);lantern(-4,z-4);lantern(4,z-11);bamboo(-6,z-10);bamboo(6,z-2)}
+for(let i=0;i<12;i++){let m=new THREE.Mesh(new THREE.ConeGeometry(7+Math.random()*5,12+Math.random()*10,5),mat(i%2?0x6aa99a:0x7bb8a2));m.position.set((i-6)*10,3,-70-Math.random()*15);scene.add(m)}
+const player=new THREE.Group();player.position.set(0,0,3);scene.add(player);
+let panda=null, modelReady=false;
+new GLTFLoader().load('./assets/red-panda.glb',g=>{panda=g.scene;const b=new THREE.Box3().setFromObject(panda), size=b.getSize(new THREE.Vector3()), center=b.getCenter(new THREE.Vector3());panda.position.sub(center);let scale=2.15/Math.max(size.y,.001);panda.scale.setScalar(scale);panda.position.y=1.05;panda.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(!o.material||o.material.color.getHex()===0xffffff)o.material=mat(0xc87945)}});player.add(panda);modelReady=true;},undefined,e=>console.warn('Character model failed to load',e));
+function makeFallback(){let g=new THREE.Group();let body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.75,5,10),mat(0xb95e35));body.position.y=1;g.add(body);let head=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),mat(0xd77b42));head.position.y=1.85;g.add(head);let tail=new THREE.Mesh(new THREE.TorusGeometry(.65,.19,8,20,Math.PI*1.6),mat(0xc76c3b));tail.position.set(-.55,.65,.25);tail.rotation.y=-.5;g.add(tail);return g}
+const fallback=makeFallback();player.add(fallback);fallback.visible=true;
+const lanes=[-2.45,0,2.45];let lane=1,jump=0,slide=0,playing=false,dead=false,speed=18,distance=0,coinCount=0,spawnT=0,coinT=0,objects=[];
+const scoreEl=document.querySelector('#score'),coinEl=document.querySelector('#coins'),bestEl=document.querySelector('#best'),overlay=document.querySelector('#overlay'),toast=document.querySelector('#toast');let best=Number(localStorage.getItem('templeDashBest')||0);bestEl.textContent=best;
+function spawnObstacle(){let laneIdx=Math.floor(Math.random()*3),type=Math.random()<.55?'rock':'gate',z=-75;let g=new THREE.Group();if(type==='rock'){let rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.75,1),mat(0x77776d));rock.position.y=.7;g.add(rock)}else{box(g,1.5,1.6,.5,red,0,1.5,0);box(g,1.8,.2,.7,gold,0,2.35,0)}g.position.set(lanes[laneIdx],0,z);scene.add(g);objects.push({mesh:g,type,lane:laneIdx,z,hit:false})}
+function spawnCoinLine(){let laneIdx=Math.floor(Math.random()*3);for(let i=0;i<5;i++){let c=new THREE.Mesh(new THREE.TorusGeometry(.28,.09,8,16),gold);c.position.set(lanes[laneIdx],1.15,-68-i*2);c.rotation.y=Math.PI/2;scene.add(c);objects.push({mesh:c,type:'coin',lane:laneIdx,z:c.position.z,hit:false})}}
+function start(){objects.forEach(o=>scene.remove(o.mesh));objects=[];lane=1;jump=slide=distance=coinCount=spawnT=coinT=0;speed=18;dead=false;playing=true;overlay.classList.add('hidden')}
+function end(){playing=false;dead=true;best=Math.max(best,Math.floor(distance));localStorage.setItem('templeDashBest',best);bestEl.textContent=best;overlay.innerHTML=`<div class="panel"><div style="font-size:40px">🐾</div><h1>RUN OVER</h1><div class="sub">Distance: <b>${Math.floor(distance)}m</b><br>Coins collected: <b>${coinCount}</b></div><button id="again">RUN AGAIN</button></div>`;overlay.classList.remove('hidden');document.querySelector('#again').onclick=start}
+document.querySelector('#start').onclick=start;
+function move(d){if(!playing)return;lane=Math.max(0,Math.min(2,lane+d))}
+function action(dir){if(!playing)return;if(dir==='up'&&jump<=0&&slide<=0)jump=.78;if(dir==='down'&&jump<=0)slide=.65}
+let sx=0,sy=0;renderer.domElement.addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX;sy=e.changedTouches[0].clientY},{passive:true});renderer.domElement.addEventListener('touchend',e=>{let dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1);else action(dy<0?'up':'down')},{passive:true});
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move(-1);if(e.key==='ArrowRight'||e.key==='d')move(1);if(e.key==='ArrowUp'||e.key===' ')action('up');if(e.key==='ArrowDown'||e.key==='s')action('down')});
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);if(playing){distance+=dt*speed*.55;speed=Math.min(32,18+distance*.018);spawnT+=dt;coinT+=dt;if(spawnT>Math.max(.62,1.35-distance*.0008)){spawnObstacle();spawnT=0}if(coinT>2.3){spawnCoinLine();coinT=0}
+player.position.x=THREE.MathUtils.damp(player.position.x,lanes[lane],12,dt);if(jump>0)jump=Math.max(0,jump-dt);if(slide>0)slide=Math.max(0,slide-dt);player.position.y=jump>0?Math.sin((.78-jump)/.78*Math.PI)*1.45:0;player.scale.y=slide>0?.58:1;
+if(panda){panda.rotation.z=Math.sin(distance*2.5)*.025;panda.position.y=1.05+Math.abs(Math.sin(distance*8))*.07}else fallback.rotation.z=Math.sin(distance*8)*.08;
+for(let i=objects.length-1;i>=0;i--){let o=objects[i];o.mesh.position.z+=speed*dt;o.z=o.mesh.position.z;if(o.type==='coin')o.mesh.rotation.z+=dt*3;if(o.z>4){scene.remove(o.mesh);objects.splice(i,1);continue}if(!o.hit&&Math.abs(o.z-player.position.z)<.85&&Math.abs(lanes[o.lane]-player.position.x)<.9){o.hit=true;if(o.type==='coin'){coinCount++;coinEl.textContent=coinCount;scene.remove(o.mesh);objects.splice(i,1);toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,350)}else if((o.type==='rock'&&jump<=0)||(o.type==='gate'&&slide<=0)){end();break}}}
+grid.position.z=(grid.position.z+speed*dt)%3;scoreEl.textContent=Math.floor(distance);
+}
+renderer.render(scene,camera)}animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
