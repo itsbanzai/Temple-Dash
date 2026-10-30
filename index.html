@@ -1,69 +1,488 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#10251f"><title>Temple Dash — Red Panda Runner</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#10251f">
+<title>Temple Dash — Red Panda Runner</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10251f;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
-#game{position:fixed;inset:0}canvas{display:block}
-#hud{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;display:flex;justify-content:space-between;padding:14px 18px;pointer-events:none;z-index:3;text-shadow:0 2px 5px #14231f}
-.pill{background:#10251fd9;border:1px solid #e8c76b66;border-radius:14px;padding:8px 13px;font-weight:800;backdrop-filter:blur(8px)}
-#brand{position:fixed;top:76px;left:18px;font-size:11px;letter-spacing:3px;color:#ffe5a2;font-weight:900;text-shadow:0 2px 5px #14231f}
-#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(#071c1688,#071c16aa);z-index:5;padding:22px}
-.panel{max-width:420px;width:100%;text-align:center;background:#132c24ed;border:1px solid #e8c76b88;border-radius:26px;padding:26px 22px;box-shadow:0 20px 70px #0008}
-h1{font-size:clamp(29px,8vw,44px);line-height:1;margin:5px 0 10px;color:#ffe2a0;letter-spacing:1px}
-.sub{color:#d5e3d4;line-height:1.5;font-size:14px}
-button{border:0;border-radius:15px;background:linear-gradient(135deg,#f7d477,#d88b36);color:#34200c;font-size:17px;font-weight:900;padding:14px 24px;margin-top:17px;min-width:180px}
-#hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:0;right:0;text-align:center;color:#fff;text-shadow:0 2px 5px #14231f;font-size:12px;pointer-events:none}
-#toast{position:fixed;top:22%;left:0;right:0;text-align:center;font-size:22px;font-weight:900;color:#ffe29a;text-shadow:0 2px 6px #000;opacity:0;pointer-events:none}
+:root{--ink:#10251f;--panel:#142f27f2;--gold:#f4cf79;--cream:#fff0c7;--muted:#c5d6c9;--line:#e8c76b66;--orange:#dd8d3e}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--ink);color:white;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none}
+#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:0;right:0;display:flex;justify-content:space-between;gap:7px;padding:8px 12px;z-index:3;pointer-events:none;text-shadow:0 2px 5px #14231f}
+.pill{background:#10251fe8;border:1px solid var(--line);border-radius:14px;padding:8px 11px;font-weight:850;font-size:clamp(12px,3vw,15px);backdrop-filter:blur(8px);min-width:75px;text-align:center}
+#brand{position:fixed;top:calc(env(safe-area-inset-top) + 69px);left:17px;font-size:10px;letter-spacing:3px;color:var(--cream);font-weight:950;text-shadow:0 2px 5px #14231f;z-index:2}
+#stage{position:fixed;top:calc(env(safe-area-inset-top) + 91px);left:17px;color:#fff6d5;font-size:10px;letter-spacing:1.5px;text-shadow:0 2px 4px #14231f;z-index:2}
+#pause{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 69px);z-index:4;border:1px solid var(--line);background:#10251fdc;color:white;border-radius:12px;padding:7px 12px;font-weight:900}
+#controls{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 56px);left:0;right:0;display:flex;justify-content:space-between;padding:0 18px;z-index:3;pointer-events:none}
+.controlGroup{display:flex;gap:9px;pointer-events:auto}
+.control{width:48px;height:48px;border-radius:15px;background:#10251fb9;border:1px solid #ffe5a277;color:#fff;font-size:20px;font-weight:900;backdrop-filter:blur(8px);padding:0;min-width:0;margin:0}
+#hint{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 15px);left:0;right:0;text-align:center;color:#fff;text-shadow:0 2px 5px #14231f;font-size:11px;pointer-events:none;z-index:2}
+#toast{position:fixed;top:23%;left:0;right:0;text-align:center;font-size:23px;font-weight:950;color:#ffe29a;text-shadow:0 2px 6px #000;opacity:0;transform:translateY(10px);transition:opacity .18s,transform .18s;pointer-events:none;z-index:4}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(#071c1680,#071c16a8);z-index:8;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px);overflow:auto}
+.panel{max-width:470px;width:100%;max-height:100%;overflow:auto;text-align:center;background:var(--panel);border:1px solid #e8c76b99;border-radius:26px;padding:23px 20px;box-shadow:0 20px 70px #0009;backdrop-filter:blur(12px)}
+.logoMark{font-size:43px;line-height:1.1}.eyebrow{color:var(--gold);font-weight:900;letter-spacing:3px;font-size:10px;margin:7px 0}
+h1{font-size:clamp(32px,9vw,46px);line-height:.98;margin:7px 0 10px;color:var(--cream);letter-spacing:1px}
+h2{font-size:22px;color:var(--cream);margin:5px 0 12px}
+.sub{color:var(--muted);line-height:1.5;font-size:14px}
+.primary,.secondary,.smallBtn{border:0;border-radius:15px;background:linear-gradient(135deg,#f7d477,#d88b36);color:#34200c;font-size:16px;font-weight:950;padding:13px 20px;margin-top:14px;min-width:170px;box-shadow:0 5px 0 #9d5d29}
+.secondary{background:#27483b;color:#fff0c7;border:1px solid #e8c76b77;box-shadow:none;min-width:0}
+.smallBtn{font-size:12px;padding:9px 12px;min-width:0;margin:0;box-shadow:none}
+.menuTabs{display:flex;gap:6px;margin:17px 0 13px}.tab{flex:1;background:#203d32;border:1px solid #d5bd7660;color:#dce8dc;border-radius:11px;padding:10px 4px;font-weight:800;font-size:12px;margin:0;min-width:0}.tab.active{background:#f0c96f;color:#33230f}
+.screen{display:none}.screen.active{display:block}
+.statRow{display:flex;gap:8px;margin:14px 0}.stat{flex:1;background:#0d211bb8;border:1px solid #e8c76b44;border-radius:13px;padding:9px 5px}.stat strong{display:block;color:var(--cream);font-size:18px}.stat span{font-size:10px;color:var(--muted);letter-spacing:1px}
+.tip{font-size:11px;color:#d3dfd2;margin-top:14px;line-height:1.5}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.card{background:#0e251fbb;border:1px solid #e8c76b55;border-radius:16px;padding:13px 10px;text-align:left;min-height:115px}
+.card .emoji{font-size:27px}.card b{display:block;color:var(--cream);margin:4px 0}.card p{font-size:11px;color:var(--muted);margin:0;line-height:1.35}
+.card.locked{opacity:.58}.card.selected{border-color:#f7d477;box-shadow:inset 0 0 0 1px #f7d47755}
+.upgrade{display:flex;align-items:center;gap:10px;text-align:left;background:#0e251fbb;border:1px solid #e8c76b55;border-radius:15px;padding:11px;margin-top:9px}
+.upgrade .uicon{font-size:26px}.upgrade .info{flex:1}.upgrade b{color:var(--cream);font-size:13px}.upgrade p{margin:3px 0 0;color:var(--muted);font-size:10px;line-height:1.35}
+.upgrade .price{font-size:11px;color:#ffe6a7;font-weight:900;white-space:nowrap}
+.row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
 .hidden{display:none!important}
-</style></head><body>
+@media(min-width:700px){.panel{padding:30px}.control{width:54px;height:54px}}
+</style>
+</head>
+<body>
 <div id="game"></div>
-<div id="hud"><div class="pill">🏮 <span id="score">0</span></div><div class="pill">🪙 <span id="coins">0</span></div><div class="pill">BEST <span id="best">0</span></div></div>
-<div id="brand">TEMPLE DASH · CHAPTER 01</div><div id="toast">+1 COIN</div>
-<div id="overlay"><div class="panel"><div style="font-size:42px">🐾</div><h1>TEMPLE DASH</h1><div class="sub">A little red panda. A very big adventure.<br>Run through the ancient temple gardens, collect golden coins and dodge the obstacles.</div><button id="start">START RUN</button><div class="sub" style="font-size:11px;margin-top:14px">Swipe ◀ ▶ to move · ▲ to jump · ▼ to slide</div></div></div>
-<div id="hint">SWIPE TO MOVE · COLLECT COINS · AVOID THE OBSTACLES</div>
+<div id="hud" class="hidden">
+ <div class="pill">🏮 <span id="score">0</span> m</div>
+ <div class="pill">🪙 <span id="runCoins">0</span></div>
+ <div class="pill">BEST <span id="best">0</span></div>
+</div>
+<div id="brand">TEMPLE DASH · CHAPTER 01</div>
+<div id="stage">TEMPLE GARDENS</div>
+<button id="pause" class="hidden">Ⅱ</button>
+<div id="toast">+1 COIN</div>
+<div id="controls" class="hidden">
+ <div class="controlGroup"><button class="control" id="leftBtn">‹</button><button class="control" id="rightBtn">›</button></div>
+ <div class="controlGroup"><button class="control" id="slideBtn">↓</button><button class="control" id="jumpBtn">↑</button></div>
+</div>
+<div id="hint" class="hidden">SWIPE TO MOVE · ↑ JUMP · ↓ SLIDE</div>
+<div id="overlay">
+ <div class="panel">
+  <div class="logoMark">🐾</div><div class="eyebrow">A LITTLE RED PANDA. A VERY BIG ADVENTURE.</div>
+  <h1>TEMPLE DASH</h1>
+  <div class="sub">Race through forgotten temple worlds, collect ancient coins, and see how far your paws can take you.</div>
+  <div class="statRow">
+   <div class="stat"><strong id="menuBest">0</strong><span>BEST RUN</span></div>
+   <div class="stat"><strong id="wallet">0</strong><span>COIN PURSE</span></div>
+   <div class="stat"><strong>01</strong><span>HERO</span></div>
+  </div>
+  <div class="menuTabs">
+   <button class="tab active" data-screen="home">PLAY</button>
+   <button class="tab" data-screen="heroes">HEROES</button>
+   <button class="tab" data-screen="upgrades">UPGRADES</button>
+  </div>
+  <section id="homeScreen" class="screen active">
+   <div class="sub">Your adventure begins in the Temple Gardens. Dodge stone guardians, leap fallen logs, slide beneath gates, and gather golden coins.</div>
+   <button class="primary" id="start">START RUN</button>
+   <div class="tip">SWIPE ◀ ▶ TO CHANGE LANES<br>SWIPE ↑ TO JUMP · SWIPE ↓ TO SLIDE<br>You can also use the on-screen controls.</div>
+  </section>
+  <section id="heroesScreen" class="screen">
+   <h2>Choose your runner</h2><div class="sub">Your red panda adventurer is ready. More friends are on the way.</div>
+   <div class="cards">
+    <div class="card selected"><div class="emoji">🐾</div><b>Rumi · Red Panda</b><p>Curious, clever, and always chasing the next discovery.</p><p style="color:#f5d27e;margin-top:7px">✓ EQUIPPED</p></div>
+    <div class="card locked"><div class="emoji">🐯</div><b>Tiger Scout</b><p>Coming Soon · A fearless trailblazer.</p></div>
+    <div class="card locked"><div class="emoji">🐉</div><b>Little Dragon</b><p>Coming Soon · A spark of ancient magic.</p></div>
+    <div class="card locked"><div class="emoji">🐼</div><b>Panda Guardian</b><p>Coming Soon · The calm protector.</p></div>
+   </div>
+  </section>
+  <section id="upgradesScreen" class="screen">
+   <div class="row" style="justify-content:space-between"><h2>Trail upgrades</h2><b style="color:#ffe5a2">🪙 <span id="upgradeWallet">0</span></b></div>
+   <div class="sub">Spend the coins you bring home to improve future runs.</div>
+   <div id="upgradeList"></div>
+   <div class="tip">Upgrades are saved on this device. Collect coins in a run to build your purse.</div>
+  </section>
+ </div>
+</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-const mount=document.querySelector('#game'), scene=new THREE.Scene(); scene.background=new THREE.Color(0x9bd9d0); scene.fog=new THREE.Fog(0x9bd9d0,24,95);
-const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,180); camera.position.set(0,5.5,10.5); camera.lookAt(0,1.2,-3);
-const renderer=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.7)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; mount.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xd8f5ff,0x43522b,2.0)); const sun=new THREE.DirectionalLight(0xffefc8,2.4);sun.position.set(-5,12,7);sun.castShadow=true;scene.add(sun);
-const mat=(c,r=.8)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
-const stone=mat(0x9c9b83), moss=mat(0x4b8150), jade=mat(0x26765b), red=mat(0xb9362c), gold=mat(0xf6c34c,.35), dark=mat(0x293c31), pink=mat(0xf6a7b5);
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(11,180),mat(0x777d65));floor.rotation.x=-Math.PI/2;floor.position.set(0,-.12,-55);floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.Group();scene.add(grid);
-for(let z=8;z>-100;z-=3){for(let x=-1;x<=1;x++){let tile=new THREE.Mesh(new THREE.BoxGeometry(2.35,.16,2.85),stone);tile.position.set(x*2.45,-.02,z);tile.receiveShadow=true;grid.add(tile);if(Math.random()<.3){let patch=new THREE.Mesh(new THREE.BoxGeometry(.5,.025,.35),moss);patch.position.set(x*2.45+(Math.random()-.5)*1.5,.075,z+(Math.random()-.5)*1.7);grid.add(patch)}}}
-function box(parent,w,h,d,material,x,y,z){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
-function pagoda(x,z,s=1){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,.45,3,.45,stone,0,1.5,0);for(let i=0;i<3;i++){let y=2.0+i*.8, roof=new THREE.Mesh(new THREE.ConeGeometry(2.1-i*.35,.65,4),red);roof.rotation.y=Math.PI/4;roof.position.y=y;roof.scale.set(1,.55,1);roof.castShadow=true;g.add(roof);box(g,1.05,.18,1.05,gold,0,y-.32,0)}}
-function lantern(x,z){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,.12,2.1,.12,dark,0,1,0);let l=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),red);l.position.y=2.35;g.add(l);box(g,.7,.1,.7,gold,0,2.75,0)}
-function bamboo(x,z){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);for(let i=0;i<4;i++){let h=3+Math.random()*2;let stem=new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,h,7),jade);stem.position.set((Math.random()-.5)*.8,h/2,0);g.add(stem);for(let j=0;j<5;j++){let leaf=new THREE.Mesh(new THREE.ConeGeometry(.16,.95,5),i%2?moss:jade);leaf.rotation.z=(Math.random()-.5)*1.5;leaf.rotation.x=Math.PI/2;leaf.position.set(stem.position.x+(Math.random()-.5)*.8,h*.35+j*.35,0);g.add(leaf)}}}
-for(let z=-8;z>-95;z-=18){pagoda(-8,z,.8);pagoda(8,z-7,.8);lantern(-4,z-4);lantern(4,z-11);bamboo(-6,z-10);bamboo(6,z-2)}
-for(let i=0;i<12;i++){let m=new THREE.Mesh(new THREE.ConeGeometry(7+Math.random()*5,12+Math.random()*10,5),mat(i%2?0x6aa99a:0x7bb8a2));m.position.set((i-6)*10,3,-70-Math.random()*15);scene.add(m)}
-const player=new THREE.Group();player.position.set(0,0,3);scene.add(player);
-let panda=null, modelReady=false;
-new GLTFLoader().load('./assets/red-panda.glb',g=>{panda=g.scene;const b=new THREE.Box3().setFromObject(panda), size=b.getSize(new THREE.Vector3()), center=b.getCenter(new THREE.Vector3());panda.position.sub(center);let scale=2.15/Math.max(size.y,.001);panda.scale.setScalar(scale);panda.position.y=1.05;panda.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(!o.material||o.material.color.getHex()===0xffffff)o.material=mat(0xc87945)}});player.add(panda);modelReady=true;},undefined,e=>console.warn('Character model failed to load',e));
-function makeFallback(){let g=new THREE.Group();let body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.75,5,10),mat(0xb95e35));body.position.y=1;g.add(body);let head=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),mat(0xd77b42));head.position.y=1.85;g.add(head);let tail=new THREE.Mesh(new THREE.TorusGeometry(.65,.19,8,20,Math.PI*1.6),mat(0xc76c3b));tail.position.set(-.55,.65,.25);tail.rotation.y=-.5;g.add(tail);return g}
-const fallback=makeFallback();player.add(fallback);fallback.visible=true;
-const lanes=[-2.45,0,2.45];let lane=1,jump=0,slide=0,playing=false,dead=false,speed=18,distance=0,coinCount=0,spawnT=0,coinT=0,objects=[];
-const scoreEl=document.querySelector('#score'),coinEl=document.querySelector('#coins'),bestEl=document.querySelector('#best'),overlay=document.querySelector('#overlay'),toast=document.querySelector('#toast');let best=Number(localStorage.getItem('templeDashBest')||0);bestEl.textContent=best;
-function spawnObstacle(){let laneIdx=Math.floor(Math.random()*3),type=Math.random()<.55?'rock':'gate',z=-75;let g=new THREE.Group();if(type==='rock'){let rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.75,1),mat(0x77776d));rock.position.y=.7;g.add(rock)}else{box(g,1.5,1.6,.5,red,0,1.5,0);box(g,1.8,.2,.7,gold,0,2.35,0)}g.position.set(lanes[laneIdx],0,z);scene.add(g);objects.push({mesh:g,type,lane:laneIdx,z,hit:false})}
-function spawnCoinLine(){let laneIdx=Math.floor(Math.random()*3);for(let i=0;i<5;i++){let c=new THREE.Mesh(new THREE.TorusGeometry(.28,.09,8,16),gold);c.position.set(lanes[laneIdx],1.15,-68-i*2);c.rotation.y=Math.PI/2;scene.add(c);objects.push({mesh:c,type:'coin',lane:laneIdx,z:c.position.z,hit:false})}}
-function start(){objects.forEach(o=>scene.remove(o.mesh));objects=[];lane=1;jump=slide=distance=coinCount=spawnT=coinT=0;speed=18;dead=false;playing=true;overlay.classList.add('hidden')}
-function end(){playing=false;dead=true;best=Math.max(best,Math.floor(distance));localStorage.setItem('templeDashBest',best);bestEl.textContent=best;overlay.innerHTML=`<div class="panel"><div style="font-size:40px">🐾</div><h1>RUN OVER</h1><div class="sub">Distance: <b>${Math.floor(distance)}m</b><br>Coins collected: <b>${coinCount}</b></div><button id="again">RUN AGAIN</button></div>`;overlay.classList.remove('hidden');document.querySelector('#again').onclick=start}
-document.querySelector('#start').onclick=start;
-function move(d){if(!playing)return;lane=Math.max(0,Math.min(2,lane+d))}
-function action(dir){if(!playing)return;if(dir==='up'&&jump<=0&&slide<=0)jump=.78;if(dir==='down'&&jump<=0)slide=.65}
-let sx=0,sy=0;renderer.domElement.addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX;sy=e.changedTouches[0].clientY},{passive:true});renderer.domElement.addEventListener('touchend',e=>{let dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1);else action(dy<0?'up':'down')},{passive:true});
-addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move(-1);if(e.key==='ArrowRight'||e.key==='d')move(1);if(e.key==='ArrowUp'||e.key===' ')action('up');if(e.key==='ArrowDown'||e.key==='s')action('down')});
-const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);if(playing){distance+=dt*speed*.55;speed=Math.min(32,18+distance*.018);spawnT+=dt;coinT+=dt;if(spawnT>Math.max(.62,1.35-distance*.0008)){spawnObstacle();spawnT=0}if(coinT>2.3){spawnCoinLine();coinT=0}
-player.position.x=THREE.MathUtils.damp(player.position.x,lanes[lane],12,dt);if(jump>0)jump=Math.max(0,jump-dt);if(slide>0)slide=Math.max(0,slide-dt);player.position.y=jump>0?Math.sin((.78-jump)/.78*Math.PI)*1.45:0;player.scale.y=slide>0?.58:1;
-if(panda){panda.rotation.z=Math.sin(distance*2.5)*.025;panda.position.y=1.05+Math.abs(Math.sin(distance*8))*.07}else fallback.rotation.z=Math.sin(distance*8)*.08;
-for(let i=objects.length-1;i>=0;i--){let o=objects[i];o.mesh.position.z+=speed*dt;o.z=o.mesh.position.z;if(o.type==='coin')o.mesh.rotation.z+=dt*3;if(o.z>4){scene.remove(o.mesh);objects.splice(i,1);continue}if(!o.hit&&Math.abs(o.z-player.position.z)<.85&&Math.abs(lanes[o.lane]-player.position.x)<.9){o.hit=true;if(o.type==='coin'){coinCount++;coinEl.textContent=coinCount;scene.remove(o.mesh);objects.splice(i,1);toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,350)}else if((o.type==='rock'&&jump<=0)||(o.type==='gate'&&slide<=0)){end();break}}}
-grid.position.z=(grid.position.z+speed*dt)%3;scoreEl.textContent=Math.floor(distance);
+import * as THREE from 'three';
+
+const $=id=>document.getElementById(id);
+const mount=$('game');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9bd9d0);
+scene.fog=new THREE.Fog(0x9bd9d0,30,112);
+const camera=new THREE.PerspectiveCamera(57,innerWidth/innerHeight,.1,190);
+camera.position.set(0,5.3,10.5);camera.lookAt(0,1.25,-4);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.55));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xdff8ff,0x465333,1.9));
+const sun=new THREE.DirectionalLight(0xffedc9,2.25);sun.position.set(-7,15,9);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x8cd8ca,.65);fill.position.set(7,5,-8);scene.add(fill);
+
+const material=(color,rough=.82,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+const mats={
+ stone:material(0xa5a38c),stoneDark:material(0x777968),moss:material(0x568557),jade:material(0x247158),
+ jadeLight:material(0x4c9a76),red:material(0xb83a30),redLight:material(0xe25a3d),gold:material(0xf4c64f,.34,.55),
+ goldLight:material(0xffe29a,.3,.38),dark:material(0x28352c),bark:material(0x674530),
+ water:material(0x51c3bf,.25,.15),leaf:material(0x397f50),pink:material(0xf2a5ae),
+ fur:material(0xc86c3d),furLight:material(0xe98a4c),cream:material(0xffdfb1),mask:material(0x633b32),
+ black:material(0x211c20,.35),white:material(0xfff2da),leather:material(0x69402c),leatherLight:material(0xa76a3a),
+ scarf:material(0x9f2e2b),stripe:material(0x3e2828),silver:material(0xbac6c0,.3,.7)
+};
+function box(parent,w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function sphere(parent,rx,ry,rz,mat,x,y,z,seg=16){const m=new THREE.Mesh(new THREE.SphereGeometry(1,seg,Math.max(8,Math.floor(seg*.7))),mat);m.scale.set(rx,ry,rz);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function cylinder(parent,rt,rb,h,mat,x,y,z,rad=10){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,rad),mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}
+function cone(parent,r,h,mat,x,y,z,rad=7){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,rad),mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}
+
+// Endless stone causeway
+const track=new THREE.Group();scene.add(track);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(12,220),material(0x777e68));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.15,-95);ground.receiveShadow=true;track.add(ground);
+const tiles=[];
+for(let z=9;z>-114;z-=3){for(let lane=-1;lane<=1;lane++){const t=box(track,2.36,.15,2.82,mats.stone,lane*2.45,-.02,z);tiles.push(t);if(Math.random()<.45){box(track,.42,.025,.22,mats.moss,lane*2.45+(Math.random()-.5)*1.65,.075,z+(Math.random()-.5)*1.8)}}}
+for(let x of [-3.72,3.72]){box(track,.22,.1,220,mats.stoneDark,x,-.025,-95);}
+
+// Background mountain silhouettes
+const mountains=new THREE.Group();scene.add(mountains);
+for(let i=0;i<20;i++){
+ const h=12+Math.random()*12,r=7+Math.random()*7;
+ const m=cone(mountains,r,h,material(i%3===0?0x6fae9e:0x82c1ad),(i-10)*10,3,-100-Math.random()*22,5);
+ m.rotation.z=(Math.random()-.5)*.17;
 }
-renderer.render(scene,camera)}animate();
+
+// Decorative scenery recycled along the route
+const decor=[];
+function addLantern(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ cylinder(g,.045,.07,1.55,mats.dark,0,.78,0,8);
+ const l=sphere(g,.25,.34,.25,mats.red,0,1.72,0,12);
+ cylinder(g,.26,.26,.09,mats.gold,0,2.06,0,10);cylinder(g,.25,.25,.07,mats.gold,0,1.39,0,10);
+ cone(g,.33,.28,mats.gold,0,2.2,0,8);decor.push(g);scene.add(g);
+}
+function addBamboo(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ for(let i=0;i<4;i++){const h=2.8+Math.random()*1.9,xx=(Math.random()-.5)*.7;
+  const stalk=cylinder(g,.055,.075,h,mats.jade,xx,h/2,0,7);
+  for(let j=1;j<6;j++){const y=h*j/7;box(g,.12,.035,.12,mats.jadeLight,xx,y,0)}
+  for(let j=0;j<5;j++){const leaf=cone(g,.16,.85,j%2?mats.leaf:mats.jadeLight,xx+(Math.random()-.5)*.7,h*.35+j*.34,.02,5);leaf.rotation.z=(Math.random()-.5)*1.7;leaf.rotation.x=Math.PI/2;}
+ }
+ decor.push(g);scene.add(g);
+}
+function addPagoda(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ cylinder(g,.32,.42,2.8,mats.stoneDark,0,1.4,0,8);
+ for(let i=0;i<3;i++){const y=1.65+i*.76;const roof=cone(g,1.55-i*.19,.6,mats.red,0,y,0,4);roof.rotation.y=Math.PI/4;roof.scale.y=.7;box(g,1.35,.11,1.35,mats.gold,0,y-.3,0);}
+ cone(g,.14,.75,mats.gold,0,3.2,0,6);decor.push(g);scene.add(g);
+}
+function addPond(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+ const w=new THREE.Mesh(new THREE.CircleGeometry(1.9,24),mats.water);w.rotation.x=-Math.PI/2;w.position.y=-.06;g.add(w);
+ for(let i=0;i<4;i++){const l=sphere(g,.28,.05,.42,mats.jadeLight,Math.cos(i*1.57)*.9,.02,Math.sin(i*1.57)*.9,10);l.rotation.y=i*.8}
+ for(let i=0;i<2;i++){cylinder(g,.12,.12,.07,mats.pink,Math.sin(i*3)*.6,.11,Math.cos(i*3)*.6,8)}
+ decor.push(g);scene.add(g);
+}
+for(let z=-7;z>-116;z-=13){
+ addBamboo(-6.2,z-2,.9);addBamboo(6.2,z-7,.95);
+ addLantern(-4.35,z-5,.95);addLantern(4.35,z-11,.95);
+ if(Math.random()<.72)addPagoda((Math.random()<.5?-1:1)*8,z-8,.72);
+ if(Math.random()<.65)addPond((Math.random()<.5?-1:1)*7.5,z-3,.75);
+}
+
+// Signature playable hero: Rumi the red panda adventurer
+const player=new THREE.Group();player.position.set(0,0,3.2);scene.add(player);
+const avatar=new THREE.Group();player.add(avatar);
+const torso=new THREE.Group();avatar.add(torso);
+sphere(torso,.48,.66,.35,mats.fur,0,1.05,0,20);
+sphere(torso,.36,.46,.29,mats.cream,0,1.02,-.16,16);
+sphere(torso,.56,.25,.37,mats.leather,0,1.1,.03,16);
+box(torso,.12,.72,.11,mats.leatherLight,-.32,1.1,-.15);
+box(torso,.12,.72,.11,mats.leatherLight,.32,1.1,-.15);
+// Explorer backpack and straps
+box(torso,.57,.72,.3,mats.leather,0,1.34,.34);
+box(torso,.48,.16,.34,mats.leatherLight,0,1.73,.33);
+box(torso,.12,.55,.08,mats.gold,-.22,1.35,.51);
+box(torso,.12,.55,.08,mats.gold,.22,1.35,.51);
+sphere(torso,.13,.13,.07,mats.gold,0,1.45,.53,12);
+sphere(torso,.07,.07,.04,mats.goldLight,0,1.45,.6,10);
+// Rolled blanket + pack side pouches
+cylinder(torso,.12,.12,.72,mats.redLight,0,1.85,.34,10).rotation.z=Math.PI/2;
+box(torso,.18,.29,.16,mats.leatherLight,-.37,1.23,.2);box(torso,.18,.29,.16,mats.leatherLight,.37,1.23,.2);
+// Head
+const head=new THREE.Group();head.position.set(0,1.92,-.02);avatar.add(head);
+sphere(head,.57,.53,.48,mats.furLight,0,0,0,24);
+sphere(head,.38,.28,.18,mats.cream,0,-.24,-.37,20);
+sphere(head,.16,.12,.11,mats.black,0,-.13,-.51,12);
+for(const side of [-1,1]){
+ sphere(head,.23,.25,.18,mats.fur,side*.4,.36,.05,16);
+ sphere(head,.15,.17,.12,mats.black,side*.4,.37,-.03,14);
+ sphere(head,.18,.25,.11,mats.cream,side*.28,-.02,-.37,16);
+ sphere(head,.105,.125,.07,mats.black,side*.2,.07,-.435,16);
+ sphere(head,.035,.042,.025,mats.white,side*.225,.11,-.493,10);
+ sphere(head,.06,.07,.045,mats.cream,side*.48,-.18,-.2,12);
+}
+// expressive brows
+box(head,.17,.035,.035,mats.mask,-.2,.26,-.45).rotation.z=.18;
+box(head,.17,.035,.035,mats.mask,.2,.26,-.45).rotation.z=-.18;
+// Scarf, collar and flowing end
+const collar=new THREE.Mesh(new THREE.TorusGeometry(.38,.12,10,24),mats.scarf);collar.position.set(0,1.57,0);collar.rotation.x=Math.PI/2;avatar.add(collar);
+const scarfTail=box(avatar,.19,.55,.09,mats.redLight,.27,1.29,-.28);scarfTail.rotation.z=-.2;
+box(avatar,.07,.15,.1,mats.gold,.27,1.55,-.29);
+// Arms with pivot joints
+function makeLimb(parent,x,y,z,upperMat,lowerMat){
+ const pivot=new THREE.Group();pivot.position.set(x,y,z);parent.add(pivot);
+ const upper=sphere(pivot,.14,.31,.15,upperMat,0,-.2,0,12);
+ sphere(pivot,.13,.23,.13,lowerMat,0,-.55,-.015,12);
+ sphere(pivot,.14,.12,.15,mats.dark,0,-.72,-.04,12);
+ return pivot;
+}
+const leftArm=makeLimb(avatar,-.52,1.52,-.03,mats.fur,mats.furLight);
+const rightArm=makeLimb(avatar,.52,1.52,-.03,mats.fur,mats.furLight);
+const leftLeg=makeLimb(avatar,-.25,.62,0,mats.fur,mats.dark);
+const rightLeg=makeLimb(avatar,.25,.62,0,mats.fur,mats.dark);
+// Tail: curved, fluffy, ringed, highly visible from behind
+const tailRoot=new THREE.Group();tailRoot.position.set(0,.77,.32);avatar.add(tailRoot);
+const tailCurve=new THREE.CatmullRomCurve3([
+ new THREE.Vector3(0,0,0),new THREE.Vector3(-.35,.04,.36),new THREE.Vector3(-.78,.23,.63),
+ new THREE.Vector3(-.9,.64,.82),new THREE.Vector3(-.63,.96,.95),new THREE.Vector3(-.2,.96,1.03)
+]);
+for(let i=0;i<8;i++){
+ const a=i/8,b=(i+1)/8;
+ const pts=tailCurve.getPoints(36).slice(Math.floor(a*36),Math.ceil(b*36)+1);
+ if(pts.length<2)continue;
+ const curve=new THREE.CatmullRomCurve3(pts);
+ const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,10,.22,10,false),i%2===0?mats.furLight:mats.cream);
+ tube.castShadow=true;tailRoot.add(tube);
+}
+sphere(tailRoot,.23,.23,.23,mats.stripe,-.2,.96,1.03,12);
+const tailTip=sphere(tailRoot,.22,.22,.22,mats.fur,-.2,.96,1.03,12);
+const compass=new THREE.Group();compass.position.set(0,1.47,.57);torso.add(compass);
+sphere(compass,.17,.17,.055,mats.gold,0,0,0,16);
+sphere(compass,.12,.12,.06,mats.dark,0,0,.05,12);
+cone(compass,.065,.23,mats.goldLight,0,.03,.1,4).rotation.x=Math.PI/2;
+
+// camera light-catching glints and atmosphere
+const ambientParticles=new THREE.Group();scene.add(ambientParticles);
+const particleMat=material(0xffe9b5,.6);
+for(let i=0;i<28;i++){const p=sphere(ambientParticles,.035,.035,.035,particleMat,(Math.random()-.5)*13,Math.random()*6-1,-Math.random()*105,8);p.userData.speed=.4+Math.random()*.6}
+
+// Progress and permanent trail upgrades
+const storageKey='templeDashProgressV2';
+let progress={wallet:0,best:0,upgrades:{magnet:0,shield:0,double:0}};
+try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}');progress={...progress,...saved,upgrades:{...progress.upgrades,...(saved.upgrades||{})}}}catch(e){}
+const legacyBest=Number(localStorage.getItem('templeDashBest')||0);
+progress.best=Math.max(progress.best||0,legacyBest);
+function save(){localStorage.setItem(storageKey,JSON.stringify(progress));localStorage.setItem('templeDashBest',String(progress.best||0));}
+const upgradeInfo=[
+ {id:'magnet',name:'Lucky Compass',icon:'🧲',desc:'Pull nearby coins toward Rumi. Each level increases the magnet range.',cost:[70,150,260]},
+ {id:'shield',name:'Guardian Charm',icon:'🛡️',desc:'Start each run with a protective hit shield. Upgrade for longer protection.',cost:[90,180,300]},
+ {id:'double',name:'Golden Fortune',icon:'✨',desc:'Earn bonus coins from every coin collected during your runs.',cost:[110,220,360]}
+];
+function renderUpgrades(){
+ $('wallet').textContent=progress.wallet;$('upgradeWallet').textContent=progress.wallet;
+ $('upgradeList').innerHTML='';
+ upgradeInfo.forEach(item=>{
+  const level=progress.upgrades[item.id]||0,el=document.createElement('div');el.className='upgrade';
+  const icon=document.createElement('div');icon.className='uicon';icon.textContent=item.icon;
+  const info=document.createElement('div');info.className='info';
+  const title=document.createElement('b');title.textContent=item.name+' · Lv '+level+'/3';
+  const desc=document.createElement('p');desc.textContent=item.desc;
+  info.append(title,desc);
+  const btn=document.createElement('button');btn.className='smallBtn';
+  if(level>=3){btn.textContent='MAXED';btn.disabled=true}
+  else{const cost=item.cost[level];btn.textContent='🪙 '+cost;btn.disabled=progress.wallet<cost;btn.onclick=()=>{if(progress.wallet<cost)return;progress.wallet-=cost;progress.upgrades[item.id]=level+1;save();renderUpgrades();toastMsg(item.name+' upgraded!')}}
+  el.append(icon,info,btn);$('upgradeList').append(el);
+ });
+ $('menuBest').textContent=progress.best;$('best').textContent=progress.best;
+}
+renderUpgrades();
+
+// Game state
+const lanes=[-2.45,0,2.45];
+let lane=1,jump=0,slide=0,playing=false,paused=false,distance=0,runCoins=0,speed=18,spawnTimer=0,coinTimer=0,powerTimer=0;
+let objects=[],shieldTime=0,magnetTime=0,doubleTime=0,toastTimer=0,stageIndex=0;
+const scoreEl=$('score'),coinsEl=$('runCoins'),bestEl=$('best'),overlay=$('overlay');
+const stageNames=['TEMPLE GARDENS','MOUNTAIN SANCTUARY','FORGOTTEN PALACE','DRAGON VALLEY'];
+const palettes=[
+ {bg:0x9bd9d0,fog:0x9bd9d0,floor:0x777e68,leaf:0x4b986e,light:0xffe9bf},
+ {bg:0x94c5d4,fog:0x94c5d4,floor:0x888b83,leaf:0x4b7c75,light:0xe7f6ff},
+ {bg:0xc8a8a0,fog:0xc8a8a0,floor:0x80776e,leaf:0x7a7852,light:0xffd7c5},
+ {bg:0xb7a1d5,fog:0xb7a1d5,floor:0x777184,leaf:0x4f836f,light:0xe2d2ff}
+];
+function setStage(idx){
+ stageIndex=idx%4;const p=palettes[stageIndex];scene.background.setHex(p.bg);scene.fog.color.setHex(p.fog);mats.stone.color.setHex(p.floor);mats.leaf.color.setHex(p.leaf);sun.color.setHex(p.light);
+ $('stage').textContent=stageNames[stageIndex]+' · '+Math.floor(distance)+' m';
+}
+function setScreen(name){
+ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.screen===name));
+ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+ $(name+'Screen').classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setScreen(t.dataset.screen)));
+function toastMsg(text){$('toast').textContent=text;$('toast').style.opacity='1';$('toast').style.transform='translateY(0)';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').style.opacity='0';$('toast').style.transform='translateY(10px)'},750)}
+
+// Objects placed on the causeway
+function addObject(mesh,type,laneIndex,z,extra={}){
+ mesh.position.set(lanes[laneIndex],0,z);scene.add(mesh);
+ objects.push({mesh,type,lane:laneIndex,z,hit:false,...extra});
+}
+function makeObstacle(type){
+ const g=new THREE.Group();
+ if(type==='rock'){
+  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.72,1),mats.stoneDark);rock.position.y=.68;rock.scale.set(1,1,.85);rock.castShadow=true;g.add(rock);
+  for(let i=0;i<3;i++)sphere(g,.12,.08,.12,mats.moss,(Math.random()-.5)*.8,1.15,(Math.random()-.5)*.6,8);
+ }else if(type==='log'){
+  const log=cylinder(g,.32,.32,1.8,mats.bark,0,.48,0,10);log.rotation.z=Math.PI/2;
+  for(let i=0;i<4;i++){const ring=cylinder(g,.34,.34,.07,mats.leatherLight,0,.48,(i-1.5)*.28,10);ring.rotation.z=Math.PI/2;}
+ }else{
+  box(g,1.55,1.7,.32,mats.red,0,1.08,0);
+  box(g,1.9,.2,.48,mats.gold,0,2.03,0);
+  box(g,.18,.5,.5,mats.gold,-.72,1.93,0);box(g,.18,.5,.5,mats.gold,.72,1.93,0);
+  box(g,.65,.16,.12,mats.goldLight,0,1.25,-.2);
+ }
+ return g;
+}
+function spawnObstacle(){
+ const laneIndex=Math.floor(Math.random()*3),type=Math.random()<.38?'rock':Math.random()<.55?'log':'gate';
+ addObject(makeObstacle(type),type,laneIndex,-86);
+}
+function coinMesh(){
+ const g=new THREE.Group();
+ const c=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.09,16),mats.gold);c.rotation.x=Math.PI/2;g.add(c);
+ const center=sphere(g,.12,.12,.035,mats.goldLight,0,0,.065,12);
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g;
+}
+function spawnCoinPattern(){
+ const laneIndex=Math.floor(Math.random()*3),pattern=Math.floor(Math.random()*3);
+ for(let i=0;i<6;i++){
+  const c=coinMesh(),z=-70-i*2.25;
+  let y=1.15;
+  if(pattern===1)y=1.15+Math.sin(i/5*Math.PI)*.95;
+  if(pattern===2)y=1.1+(i%2)*.55;
+  c.position.set(lanes[laneIndex],y,z);scene.add(c);
+  objects.push({mesh:c,type:'coin',lane:laneIndex,z,hit:false,baseY:y});
+ }
+}
+function spawnPower(){
+ const laneIndex=Math.floor(Math.random()*3),r=Math.random(),type=r<.34?'magnet':r<.67?'shield':'double';
+ const g=new THREE.Group(),color=type==='magnet'?mats.gold:type==='shield'?mats.jadeLight:mats.redLight;
+ const orb=sphere(g,.34,.34,.34,color,0,1.35,0,16);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.45,.06,8,20),mats.goldLight);ring.position.y=1.35;g.add(ring);
+ const text=sphere(g,.13,.13,.13,mats.white,0,1.35,-.33,10);
+ addObject(g,'power',laneIndex,-83,{power:type});
+}
+function clearObjects(){objects.forEach(o=>scene.remove(o.mesh));objects=[]}
+function startRun(){
+ clearObjects();lane=1;jump=0;slide=0;distance=0;runCoins=0;speed=18;spawnTimer=.4;coinTimer=1.1;powerTimer=7;shieldTime=(progress.upgrades.shield||0)*2.2;magnetTime=0;doubleTime=0;paused=false;playing=true;
+ player.position.set(0,0,3.2);player.scale.set(1,1,1);avatar.rotation.set(0,0,0);avatar.rotation.y=0;
+ $('overlay').classList.add('hidden');$('hud').classList.remove('hidden');$('controls').classList.remove('hidden');$('hint').classList.remove('hidden');$('pause').classList.remove('hidden');
+ $('pause').textContent='Ⅱ';scoreEl.textContent='0';coinsEl.textContent='0';setStage(0);
+}
+function menu(){
+ playing=false;paused=false;clearObjects();$('overlay').classList.remove('hidden');$('hud').classList.add('hidden');$('controls').classList.add('hidden');$('hint').classList.add('hidden');$('pause').classList.add('hidden');
+ $('overlay').innerHTML='<div class="panel"><div class="logoMark">🐾</div><div class="eyebrow">YOUR ADVENTURE CONTINUES</div><h1>READY, RUNNER?</h1><div class="sub">Best distance: <b>'+progress.best+' m</b><br>Coins in your purse: <b>'+progress.wallet+'</b></div><button class="primary" id="menuPlay">PLAY AGAIN</button><br><button class="secondary" id="menuHome">MAIN MENU</button></div>';
+ $('menuPlay').onclick=startRun;$('menuHome').onclick=showMainMenu;
+}
+function showMainMenu(){
+ playing=false;paused=false;clearObjects();$('overlay').innerHTML=
+ '<div class="panel"><div class="logoMark">🐾</div><div class="eyebrow">A LITTLE RED PANDA. A VERY BIG ADVENTURE.</div><h1>TEMPLE DASH</h1><div class="sub">Race through forgotten temple worlds, collect ancient coins, and see how far your paws can take you.</div><div class="statRow"><div class="stat"><strong id="menuBest">'+progress.best+'</strong><span>BEST RUN</span></div><div class="stat"><strong id="wallet">'+progress.wallet+'</strong><span>COIN PURSE</span></div><div class="stat"><strong>01</strong><span>HERO</span></div></div><div class="menuTabs"><button class="tab active" data-screen="home">PLAY</button><button class="tab" data-screen="heroes">HEROES</button><button class="tab" data-screen="upgrades">UPGRADES</button></div><section id="homeScreen" class="screen active"><div class="sub">Dodge stone guardians, leap fallen logs, slide beneath gates, and gather golden coins.</div><button class="primary" id="start">START RUN</button><div class="tip">SWIPE ◀ ▶ TO CHANGE LANES<br>SWIPE ↑ TO JUMP · SWIPE ↓ TO SLIDE<br>On-screen controls are available too.</div></section><section id="heroesScreen" class="screen"><h2>Choose your runner</h2><div class="sub">Rumi is ready. More friends are on the way.</div><div class="cards"><div class="card selected"><div class="emoji">🐾</div><b>Rumi · Red Panda</b><p>Curious, clever, and always chasing the next discovery.</p><p style="color:#f5d27e;margin-top:7px">✓ EQUIPPED</p></div><div class="card locked"><div class="emoji">🐯</div><b>Tiger Scout</b><p>Coming Soon · A fearless trailblazer.</p></div><div class="card locked"><div class="emoji">🐉</div><b>Little Dragon</b><p>Coming Soon · A spark of ancient magic.</p></div><div class="card locked"><div class="emoji">🐼</div><b>Panda Guardian</b><p>Coming Soon · The calm protector.</p></div></div></section><section id="upgradesScreen" class="screen"><div class="row" style="justify-content:space-between"><h2>Trail upgrades</h2><b style="color:#ffe5a2">🪙 <span id="upgradeWallet">'+progress.wallet+'</span></b></div><div class="sub">Spend coins you bring home to improve future runs.</div><div id="upgradeList"></div><div class="tip">Upgrades are saved on this device.</div></section></div>';
+ $('overlay').classList.remove('hidden');
+ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(t.dataset.screen+'Screen').classList.add('active')});
+ $('start').onclick=startRun;renderUpgrades();
+}
+function pauseRun(){
+ if(!playing)return;paused=!paused;
+ if(paused){$('overlay').innerHTML='<div class="panel"><div class="logoMark">⏸</div><h1>PAUSED</h1><div class="sub">Take a breath. The trail will wait.</div><button class="primary" id="resume">RESUME RUN</button><br><button class="secondary" id="quit">END RUN</button></div>';$('overlay').classList.remove('hidden');$('resume').onclick=()=>{$('overlay').classList.add('hidden');paused=false};$('quit').onclick=endRun;$('pause').textContent='▶'}
+ else{$('overlay').classList.add('hidden');$('pause').textContent='Ⅱ'}
+}
+function endRun(){
+ playing=false;paused=false;const score=Math.floor(distance);
+ progress.best=Math.max(progress.best,score);progress.wallet+=runCoins;save();renderUpgrades();
+ $('pause').classList.add('hidden');$('controls').classList.add('hidden');$('hint').classList.add('hidden');
+ $('overlay').innerHTML='<div class="panel"><div class="logoMark">🐾</div><div class="eyebrow">THE TRAIL GOES ON</div><h1>RUN COMPLETE</h1><div class="statRow"><div class="stat"><strong>'+score+' m</strong><span>DISTANCE</span></div><div class="stat"><strong>'+runCoins+'</strong><span>COINS FOUND</span></div><div class="stat"><strong>'+progress.best+' m</strong><span>PERSONAL BEST</span></div></div><div class="sub">You brought home '+runCoins+' golden coins. Your purse now holds '+progress.wallet+'.</div><button class="primary" id="again">RUN AGAIN</button><br><button class="secondary" id="toMenu">MAIN MENU</button></div>';
+ $('overlay').classList.remove('hidden');$('again').onclick=startRun;$('toMenu').onclick=showMainMenu;
+ $('hud').classList.add('hidden');
+}
+function collectCoin(o){
+ o.hit=true;scene.remove(o.mesh);runCoins+=((progress.upgrades.double||0)>0?1+(progress.upgrades.double||0):1)*(doubleTime>0?2:1);
+ coinsEl.textContent=runCoins;toastMsg('+'+(((progress.upgrades.double||0)>0?1+(progress.upgrades.double||0):1)*(doubleTime>0?2:1))+' COIN'+(doubleTime>0?' · DOUBLE!':''));
+}
+function handlePower(type){
+ if(type==='magnet'){magnetTime=9+(progress.upgrades.magnet||0)*2;toastMsg('LUCKY COMPASS · MAGNET!')}
+ if(type==='shield'){shieldTime=10+(progress.upgrades.shield||0)*2;toastMsg('GUARDIAN CHARM · SHIELD!')}
+ if(type==='double'){doubleTime=10;toastMsg('GOLDEN FORTUNE · 2× COINS!')}
+}
+
+// Input: swipe plus generous on-screen controls
+function move(d){if(!playing||paused)return;lane=Math.max(0,Math.min(2,lane+d))}
+function act(dir){if(!playing||paused)return;if(dir==='up'&&jump<=0&&slide<=0)jump=.82;if(dir==='down'&&jump<=0)slide=.78}
+$('start').onclick=startRun;$('pause').onclick=pauseRun;
+$('leftBtn').onclick=()=>move(-1);$('rightBtn').onclick=()=>move(1);$('jumpBtn').onclick=()=>act('up');$('slideBtn').onclick=()=>act('down');
+let sx=0,sy=0;
+renderer.domElement.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY});
+renderer.domElement.addEventListener('pointerup',e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1);else act(dy<0?'up':'down')});
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move(-1);if(e.key==='ArrowRight'||e.key==='d')move(1);if(e.key==='ArrowUp'||e.key===' ')act('up');if(e.key==='ArrowDown'||e.key==='s')act('down');if(e.key==='Escape')pauseRun()});
+
+// Main update and collisions
+const clock=new THREE.Clock();let elapsed=0;
+function animate(){
+ requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ if(playing&&!paused){
+  distance+=dt*speed*.56;speed=Math.min(34,18+distance*.019);
+  spawnTimer+=dt;coinTimer+=dt;powerTimer+=dt;
+  if(spawnTimer>Math.max(.58,1.28-distance*.00065)){spawnObstacle();spawnTimer=0}
+  if(coinTimer>2.15){spawnCoinPattern();coinTimer=0}
+  if(powerTimer>13){if(Math.random()<.75)spawnPower();powerTimer=0}
+  lane=THREE.MathUtils.clamp(lane,0,2);
+  player.position.x=THREE.MathUtils.damp(player.position.x,lanes[lane],13,dt);
+  if(jump>0)jump=Math.max(0,jump-dt);if(slide>0)slide=Math.max(0,slide-dt);
+  const jumping=jump>0,sliding=slide>0;
+  player.position.y=jumping?Math.sin((.82-jump)/.82*Math.PI)*1.55:0;
+  avatar.scale.y=THREE.MathUtils.damp(avatar.scale.y,sliding?.68:1,13,dt);
+  avatar.rotation.x=THREE.MathUtils.damp(avatar.rotation.x,sliding?.38:0,10,dt);
+  const runSwing=Math.sin(elapsed*speed*.9);
+  leftArm.rotation.x=jumping?-.9:sliding?-.2:runSwing*.75;
+  rightArm.rotation.x=jumping?-.9:sliding?-.2:-runSwing*.75;
+  leftLeg.rotation.x=jumping?-.65:sliding?.55:-runSwing*.78;
+  rightLeg.rotation.x=jumping?-.65:sliding?.55:runSwing*.78;
+  tailRoot.rotation.x=Math.sin(elapsed*5)*.08;
+  tailRoot.rotation.z=Math.sin(elapsed*4.2)*.12;
+  head.rotation.z=Math.sin(elapsed*speed*.45)*.025;
+  scarfTail.rotation.x=Math.sin(elapsed*9)*.15;
+  if(shieldTime>0)shieldTime-=dt;if(magnetTime>0)magnetTime-=dt;if(doubleTime>0)doubleTime-=dt;
+  if(shieldTime>0&&Math.floor(elapsed*5)%2===0)avatar.traverse(o=>{if(o.isMesh&&o.material===mats.gold)o.material=mats.goldLight});
+  // scroll floor and side scenery
+  tiles.forEach(t=>{t.position.z+=speed*dt;if(t.position.z>10)t.position.z-=123});
+  decor.forEach(g=>{g.position.z+=speed*dt;if(g.position.z>12)g.position.z-=130});
+  // Objects move toward the runner
+  for(let i=objects.length-1;i>=0;i--){
+   const o=objects[i];o.mesh.position.z+=speed*dt;o.z=o.mesh.position.z;
+   if(o.type==='coin'){
+    o.mesh.rotation.y+=dt*3.3;o.mesh.position.y=o.baseY+Math.sin(elapsed*4+Math.abs(o.z))*.07;
+    if(magnetTime>0&&Math.abs(o.z-player.position.z)<9)o.mesh.position.x=THREE.MathUtils.damp(o.mesh.position.x,player.position.x,5,dt);
+   }else if(o.type==='power'){o.mesh.rotation.y+=dt*1.5;o.mesh.position.y=Math.sin(elapsed*3)*.08}
+   if(o.z>7){scene.remove(o.mesh);objects.splice(i,1);continue}
+   const dz=Math.abs(o.z-player.position.z),dx=Math.abs(o.mesh.position.x-player.position.x);
+   if(!o.hit&&dz<.95&&dx<.92){
+    if(o.type==='coin'){collectCoin(o);objects.splice(i,1)}
+    else if(o.type==='power'){o.hit=true;handlePower(o.power);scene.remove(o.mesh);objects.splice(i,1)}
+    else{
+     const jumpObstacle=o.type==='rock'||o.type==='log';
+     const avoided=jumpObstacle?player.position.y>.76:sliding;
+     if(!avoided){if(shieldTime>0){shieldTime=0;o.hit=true;toastMsg('SHIELD SAVED YOU!')}else{endRun();break}}
+     else{o.hit=true;toastMsg(jumpObstacle?'NICE JUMP!':'CLEAN SLIDE!')}
+    }
+   }
+  }
+  // Ambient drifting petals / glowing motes
+  ambientParticles.children.forEach(p=>{p.position.y+=Math.sin(elapsed+p.position.x)*dt*.12;p.position.z+=p.userData.speed*dt*.3;if(p.position.z>8)p.position.z=-100});
+  scoreEl.textContent=Math.floor(distance);$('stage').textContent=stageNames[Math.min(3,Math.floor(distance/450))]+' · '+Math.floor(distance)+' m';
+  const newStage=Math.min(3,Math.floor(distance/450));if(newStage!==stageIndex)setStage(newStage);
+ }
+ // Idle character animation and cinematic tiny camera movement
+ if(!playing){tailRoot.rotation.z=Math.sin(elapsed*1.4)*.08;head.rotation.y=Math.sin(elapsed*.8)*.06;}
+ renderer.render(scene,camera);
+}
+animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-</script></body></html>
+$('best').textContent=progress.best;$('menuBest').textContent=progress.best;
+</script>
+</body>
+</html>
